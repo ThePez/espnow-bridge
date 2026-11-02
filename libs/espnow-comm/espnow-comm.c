@@ -103,7 +103,7 @@ static esp_err_t espnow_init(const uint8_t* peer_addr[], uint8_t num_peers) {
 
     // Add all peers
     for (uint8_t i = 0; i < num_peers; i++) {
-        CHECK_ERR(esp_now_module_add_peer(peer_addr[i]), "peer add failed");
+        CHECK_ERR(esp_now_module_add_peer(peer_addr[i], true), "peer add failed");
     }
 
     ESP_LOGI(TAG, "ESP-NOW initialized with encryption, %u peer(s) added", num_peers);
@@ -144,26 +144,27 @@ esp_err_t esp_now_send_packet(const uint8_t* addr, struct wifi_packet_t* packet)
 }
 
 
-esp_err_t esp_now_module_add_peer(const uint8_t mac[6]) {
+esp_err_t esp_now_module_add_peer(const uint8_t mac[6], bool encrypted) {
     if (mac == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
 
-    // Add peer with encryption enabled
     esp_now_peer_info_t peer_info = {
         .channel = 0,         // 0 = use the current WiFi channel
         .ifidx = WIFI_IF_STA, // WIFI interface
-        .encrypt = true       // Encryption enabled
+        .encrypt = encrypted,
     };
 
-    // Copy in the LMK and the mac address
-    memcpy(peer_info.lmk, lmk_key, sizeof(lmk_key));
+    // Copy in the mac address, and the LMK if this peer is encrypted
     memcpy(peer_info.peer_addr, mac, ESP_NOW_ETH_ALEN);
+    if (encrypted) {
+        memcpy(peer_info.lmk, lmk_key, sizeof(lmk_key));
+    }
 
     esp_err_t err = esp_now_add_peer(&peer_info);
     if (err == ESP_ERR_ESPNOW_EXIST) {
-        // Already registered, nothing to do
-        return ESP_OK;
+        // Already registered: update it, in case its encryption setting changed
+        err = esp_now_mod_peer(&peer_info);
     }
     return err;
 }

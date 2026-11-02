@@ -70,17 +70,17 @@ static void cmd_help(int argc, char **argv);
 // The command registry: dispatch, help and Tab completion all read from this table.
 static const Command commands[] = {
 #if defined(ESP_PLATFORM)
-    {"peer_add", "<mac>", "Add a device (and remember it across reboots)", cmd_peer_add},
+    {"peer_add", "<mac> [-u]", "Add a device and remember it. -u: unencrypted", cmd_peer_add},
     {"peer_del", "<mac>", "Remove a device and forget it", cmd_peer_del},
     {"peer_clear", "", "Remove every stored device", cmd_peer_clear},
-    {"peers", "", "Show the registered devices", cmd_peers},
+    {"peers", "", "Show the registered devices (encrypted and not)", cmd_peers},
     {"mac", "", "Show this device's MAC address", cmd_display_mac},
     {"summary", "", "Show packet counts and per-sender totals", cmd_summary},
 #endif
 #if defined(USE_HAL_DRIVER)
     {"esp_mac", "", "Ask the ESP for its MAC address", cmd_esp_mac},
     {"esp_peers", "", "Ask the ESP for its stored peers", cmd_esp_peers},
-    {"esp_add", "<mac>", "Tell the ESP to add a peer", cmd_esp_add},
+    {"esp_add", "<mac> [-u]", "Tell the ESP to add a peer. -u: unencrypted", cmd_esp_add},
     {"esp_del", "<mac>", "Tell the ESP to remove a peer", cmd_esp_del},
     {"esp_clear", "", "Tell the ESP to remove every peer", cmd_esp_clear},
     {"esp_send", "", "Send a test JOIN packet through the ESP", cmd_esp_send},
@@ -181,36 +181,60 @@ static uint8_t parse_mac(const char *str, uint8_t mac[6])
     return 0;
 }
 
+// Parses the arguments of peer_add / esp_add: "<mac>" or "<mac> -u". Returns 0 on success,
+// 1 if the arguments are the wrong shape, 2 if the MAC is malformed.
+static uint8_t parse_peer_args(int argc, char **argv, uint8_t mac[6], bool *encrypted)
+{
+    if (argc < 2 || argc > 3 || (argc == 3 && strcmp(argv[2], "-u") != 0)) {
+        return 1;
+    }
+
+    if (parse_mac(argv[1], mac)) {
+        return 2;
+    }
+
+    *encrypted = (argc == 2);
+    return 0;
+}
+
+static void print_peer_usage(const char *name)
+{
+    printf("Usage: %s <mac> [-u]   e.g. %s aa:bb:cc:dd:ee:ff\r\n", name, name);
+    printf("  -u  unencrypted peer (for devices that can't be given our keys)\r\n");
+}
+
 #if defined(ESP_PLATFORM)
 
 static void cmd_peer_add(int argc, char **argv)
 {
-    if (argc != 2) {
-        printf("Usage: peer_add <mac>   e.g. peer_add aa:bb:cc:dd:ee:ff\r\n");
-        return;
-    }
-
     uint8_t mac[6];
-    if (parse_mac(argv[1], mac)) {
+    bool encrypted;
+    uint8_t rc = parse_peer_args(argc, argv, mac, &encrypted);
+    if (rc == 1) {
+        print_peer_usage("peer_add");
+        return;
+    } else if (rc == 2) {
         printf("Invalid MAC address, expected aa:bb:cc:dd:ee:ff\r\n");
         return;
     }
 
-    esp_err_t err = esp_now_module_add_peer(mac);
+    esp_err_t err = esp_now_module_add_peer(mac, encrypted);
     if (err != ESP_OK) {
         printf("Failed to add peer (%s)\r\n", esp_err_to_name(err));
         return;
     }
 
-    printf("Added peer %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4],
-           mac[5]);
+    printf("Added %s peer %02x:%02x:%02x:%02x:%02x:%02x", encrypted ? "encrypted" : "unencrypted",
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
     // Remember it so it is added again on the next boot
-    err = mac_store_add(mac);
+    err = mac_store_add(mac, encrypted);
     if (err == ESP_OK) {
         printf(" (saved)\r\n");
     } else if (err == ESP_ERR_NO_MEM) {
-        printf(" (not saved, %d already stored)\r\n", MAC_STORE_MAX);
+        printf(" (not saved, %d %s peers already stored)\r\n",
+               encrypted ? MAC_STORE_MAX_ENCRYPTED : MAC_STORE_MAX_PLAIN,
+               encrypted ? "encrypted" : "unencrypted");
     } else {
         printf(" (not saved: %s)\r\n", esp_err_to_name(err));
     }
@@ -257,11 +281,14 @@ static void cmd_peer_clear(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    size_t count = mac_store_count();
-    for (size_t i = 0; i < count; i++) {
-        uint8_t mac[6];
-        if (mac_store_get(i, mac) == ESP_OK) {
-            esp_now_del_peer(mac);
+    size_t count = mac_store_count(true) + mac_store_count(false);
+    for (int type = 0; type < 2; type++) {
+        bool encrypted = type == 0;
+        for (size_t i = 0; i < mac_store_count(encrypted); i++) {
+            uint8_t mac[6];
+            if (mac_store_get(encrypted, i, mac) == ESP_OK) {
+                esp_now_del_peer(mac);
+            }
         }
     }
 
@@ -283,17 +310,33 @@ static void cmd_peers(int argc, char **argv)
         return;
     }
 
-    for (int i = 0; i < num.total_num; i++) {
-        esp_now_peer_info_t peer;
-        // !i only true when i == 0
-        err = esp_now_fetch_peer(!i, &peer);
-        if (err != ESP_OK) {
-            break;
+    // One list per type, each found by walking all the peers
+    for (int pass = 0; pass < 2; pass++) {
+        bool encrypted = pass == 0;
+        printf("%s:\r\n", encrypted ? "Encrypted" : "Unencrypted");
+
+        int shown = 0;
+        for (int i = 0; i < num.total_num; i++) {
+            esp_now_peer_info_t peer;
+            // !i only true when i == 0
+            err = esp_now_fetch_peer(!i, &peer);
+            if (err != ESP_OK) {
+                break;
+            }
+
+            if (peer.encrypt != encrypted) {
+                continue;
+            }
+
+            uint8_t *mac = peer.peer_addr;
+            printf("  %02x:%02x:%02x:%02x:%02x:%02x\r\n", mac[0], mac[1], mac[2], mac[3], mac[4],
+                   mac[5]);
+            shown++;
         }
 
-        uint8_t *mac = peer.peer_addr;
-        printf("Peer %d: %02x:%02x:%02x:%02x:%02x:%02x\r\n", i, mac[0], mac[1], mac[2],
-               mac[3], mac[4], mac[5]);
+        if (shown == 0) {
+            printf("  none\r\n");
+        }
     }
 }
 
@@ -363,31 +406,26 @@ static void cmd_esp_peers(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    // A reply only holds ESP_LINK_PEERS_PER_REPLY MACs, so ask for them in batches, passing the
-    // index of the first one wanted. The first reply says how many there are in total.
-    uint8_t total = 0;
-    for (uint8_t start = 0;; start += ESP_LINK_PEERS_PER_REPLY) {
+    // The ESP keeps one list per type and each fits in a reply, so this is one request each
+    for (uint8_t type = ESP_LINK_PEER_ENCRYPTED; type <= ESP_LINK_PEER_UNENCRYPTED; type++) {
         uint8_t resp[ESP_LINK_PAYLOAD_LEN];
         uint8_t len = 0;
-        uint8_t rc = esp_link_request(ESP_LINK_CMD_GET_PEERS, &start, 1, resp, &len);
+        uint8_t rc = esp_link_request(ESP_LINK_CMD_GET_PEERS, &type, 1, resp, &len);
         if (rc != HAL_OK || len < 1) {
             esp_link_report("GET_PEERS", rc == HAL_OK ? HAL_ERROR : rc);
             return;
         }
 
-        if (start == 0) {
-            total = resp[0];
-            printf("%u peer(s)\r\n", total);
-        }
+        printf("%s:\r\n", type == ESP_LINK_PEER_ENCRYPTED ? "Encrypted" : "Unencrypted");
 
         uint8_t shown = (uint8_t)((len - 1) / 6);
         for (uint8_t i = 0; i < shown; i++) {
-            printf("Peer %u: ", start + i);
+            printf("  ");
             print_mac(&resp[1 + 6 * i]);
         }
 
-        if (start + ESP_LINK_PEERS_PER_REPLY >= total) {
-            break;
+        if (shown == 0) {
+            printf("  none\r\n");
         }
     }
 }
@@ -406,7 +444,19 @@ static void esp_mac_request(const char *name, uint8_t cmd, int argc, char **argv
 
 static void cmd_esp_add(int argc, char **argv)
 {
-    esp_mac_request("esp_add", ESP_LINK_CMD_PEER_ADD, argc, argv);
+    uint8_t arg[7]; // the MAC, then the peer type
+    bool encrypted;
+    uint8_t rc = parse_peer_args(argc, argv, arg, &encrypted);
+    if (rc == 1) {
+        print_peer_usage("esp_add");
+        return;
+    } else if (rc == 2) {
+        printf("Invalid MAC address, expected aa:bb:cc:dd:ee:ff\r\n");
+        return;
+    }
+
+    arg[6] = encrypted ? ESP_LINK_PEER_ENCRYPTED : ESP_LINK_PEER_UNENCRYPTED;
+    esp_link_report("esp_add", esp_link_request(ESP_LINK_CMD_PEER_ADD, arg, sizeof(arg), NULL, NULL));
 }
 
 static void cmd_esp_del(int argc, char **argv)

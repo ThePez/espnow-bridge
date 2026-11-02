@@ -11,6 +11,7 @@
 
 #include <esp_err.h>
 #include <freertos/FreeRTOS.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 union packet_data {
@@ -70,17 +71,22 @@ esp_err_t esp_now_module_init(const uint8_t *peer_addr[], uint8_t num_peers);
 esp_err_t esp_now_send_packet(const uint8_t *addr, struct wifi_packet_t *packet);
 
 /**
- * @brief Registers a MAC address as an encrypted ESP-NOW peer.
+ * @brief Registers a MAC address as an ESP-NOW peer, encrypted or not.
  *
- * Uses the module's shared LMK. Registering an address that is already a peer
- * is treated as success. Requires esp_now_module_init() to have run.
+ * An encrypted peer uses the module's shared LMK, and the other board must have this one
+ * registered as an encrypted peer too. An unencrypted peer needs nothing from the other board,
+ * which also receives unencrypted frames from senders it has never registered.
  *
- * @param mac MAC address (6 bytes) of the peer to add.
+ * Registering an address that is already a peer updates it, so this can also change an existing
+ * peer between encrypted and unencrypted. Requires esp_now_module_init() to have run.
+ *
+ * @param mac       MAC address (6 bytes) of the peer to add.
+ * @param encrypted true to encrypt traffic with this peer, false to send it in the clear.
  *
  * @return ESP_OK on success, ESP_ERR_INVALID_ARG if mac is NULL, or the error
- *         code from esp_now_add_peer() on failure.
+ *         code from esp_now_add_peer() / esp_now_mod_peer() on failure.
  */
-esp_err_t esp_now_module_add_peer(const uint8_t mac[6]);
+esp_err_t esp_now_module_add_peer(const uint8_t mac[6], bool encrypted);
 
 /**
  * @brief Changes the WiFi channel ESP-NOW communicates on.

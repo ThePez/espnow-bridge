@@ -6,14 +6,22 @@
 #include "device-config.h"
 
 #define NAMESPACE   "mac_store"
-#define CFG_VERSION 1
+#define CFG_VERSION 2
+
+// Slots in each list. Index 0 is the encrypted list, index 1 the unencrypted one.
+#define LIST_ENCRYPTED 0
+#define LIST_PLAIN     1
+#define LIST_SLOTS \
+    (MAC_STORE_MAX_ENCRYPTED > MAC_STORE_MAX_PLAIN ? MAC_STORE_MAX_ENCRYPTED : MAC_STORE_MAX_PLAIN)
+
+static const uint8_t LIST_MAX[2] = {MAC_STORE_MAX_ENCRYPTED, MAC_STORE_MAX_PLAIN};
 
 // Stored as a single blob. `version` must stay first (see device-config.h); bump CFG_VERSION on
 // any layout change.
 typedef struct {
     uint16_t version;
-    uint8_t count;
-    uint8_t macs[MAC_STORE_MAX][6];
+    uint8_t count[2];
+    uint8_t macs[2][LIST_SLOTS][6];
 } MacStoreConfig;
 
 static const MacStoreConfig defaults = {.version = CFG_VERSION};
@@ -24,19 +32,37 @@ static bool ready = false;
 /* Helpers                                                                   */
 /* ------------------------------------------------------------------------- */
 
-// index of mac in the list, or -1. Caller holds cfgMutex.
-static int find(const uint8_t mac[6])
+static inline int list_of(bool encrypted)
 {
-    for (int i = 0; i < cfg.count; i++) {
-        if (memcmp(cfg.macs[i], mac, 6) == 0) {
-            return i;
+    return encrypted ? LIST_ENCRYPTED : LIST_PLAIN;
+}
+
+// Looks for mac in both lists. Returns true and sets *list and *index if found.
+// Caller holds cfgMutex.
+static bool find(const uint8_t mac[6], int *list, int *index)
+{
+    for (int l = 0; l < 2; l++) {
+        for (int i = 0; i < cfg.count[l]; i++) {
+            if (memcmp(cfg.macs[l][i], mac, 6) == 0) {
+                *list = l;
+                *index = i;
+                return true;
+            }
         }
     }
 
-    return -1;
+    return false;
 }
 
-// Writes the list to flash. If that fails, restores `backup` so RAM matches flash.
+// close the gap left by an entry, then wipe the freed last slot
+static void remove_at(int list, int index)
+{
+    memmove(cfg.macs[list][index], cfg.macs[list][index + 1],
+            (size_t)(cfg.count[list] - index - 1) * 6);
+    memset(cfg.macs[list][--cfg.count[list]], 0, 6);
+}
+
+// Writes the lists to flash. If that fails, restores `backup` so RAM matches flash.
 static esp_err_t save(const MacStoreConfig *backup)
 {
     esp_err_t err = device_config_save(NAMESPACE, &cfg, sizeof(cfg));
@@ -60,10 +86,11 @@ esp_err_t mac_store_init(void)
 
     cfg = defaults;
     err = device_config_load(NAMESPACE, &cfg, sizeof(cfg), CFG_VERSION, &defaults);
-    if (err != ESP_OK || cfg.count > MAC_STORE_MAX) {
+    if (err != ESP_OK || cfg.count[LIST_ENCRYPTED] > LIST_MAX[LIST_ENCRYPTED] ||
+        cfg.count[LIST_PLAIN] > LIST_MAX[LIST_PLAIN]) {
         // First boot or a layout change (the library reports that as an error): it has
         // written the defaults to flash, but `cfg` may still hold a stale blob, so start
-        // from the defaults here too. If the write itself failed the list still works in
+        // from the defaults here too. If the write itself failed the lists still work in
         // RAM and mac_store_add() will report the failed save.
         cfg = defaults;
     }
@@ -72,26 +99,27 @@ esp_err_t mac_store_init(void)
     return ESP_OK;
 }
 
-size_t mac_store_count(void)
+size_t mac_store_count(bool encrypted)
 {
-    return ready ? cfg.count : 0;
+    return ready ? cfg.count[list_of(encrypted)] : 0;
 }
 
-esp_err_t mac_store_get(size_t index, uint8_t mac[6])
+esp_err_t mac_store_get(bool encrypted, size_t index, uint8_t mac[6])
 {
     if (!ready) {
         return ESP_ERR_INVALID_STATE;
     }
 
-    if (index >= cfg.count) {
+    int list = list_of(encrypted);
+    if (index >= cfg.count[list]) {
         return ESP_ERR_NOT_FOUND;
     }
 
-    memcpy(mac, cfg.macs[index], 6);
+    memcpy(mac, cfg.macs[list][index], 6);
     return ESP_OK;
 }
 
-esp_err_t mac_store_add(const uint8_t mac[6])
+esp_err_t mac_store_add(const uint8_t mac[6], bool encrypted)
 {
     if (!ready) {
         return ESP_ERR_INVALID_STATE;
@@ -100,12 +128,20 @@ esp_err_t mac_store_add(const uint8_t mac[6])
     xSemaphoreTake(cfgMutex, portMAX_DELAY);
 
     esp_err_t err = ESP_OK;
-    if (find(mac) < 0) {
-        if (cfg.count >= MAC_STORE_MAX) {
+    int want = list_of(encrypted);
+    int list, index;
+    bool found = find(mac, &list, &index);
+
+    if (!(found && list == want)) {
+        if (cfg.count[want] >= LIST_MAX[want]) {
             err = ESP_ERR_NO_MEM;
         } else {
             MacStoreConfig backup = cfg;
-            memcpy(cfg.macs[cfg.count++], mac, 6);
+            if (found) {
+                remove_at(list, index); // it is changing from one list to the other
+            }
+
+            memcpy(cfg.macs[want][cfg.count[want]++], mac, 6);
             err = save(&backup);
         }
     }
@@ -123,12 +159,10 @@ esp_err_t mac_store_remove(const uint8_t mac[6])
     xSemaphoreTake(cfgMutex, portMAX_DELAY);
 
     esp_err_t err = ESP_ERR_NOT_FOUND;
-    int i = find(mac);
-    if (i >= 0) {
+    int list, index;
+    if (find(mac, &list, &index)) {
         MacStoreConfig backup = cfg;
-        // close the gap, then wipe the freed last slot
-        memmove(cfg.macs[i], cfg.macs[i + 1], (size_t)(cfg.count - i - 1) * 6);
-        memset(cfg.macs[--cfg.count], 0, 6);
+        remove_at(list, index);
         err = save(&backup);
     }
 

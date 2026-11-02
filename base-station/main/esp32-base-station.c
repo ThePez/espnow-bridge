@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "esp_err.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -15,16 +17,19 @@ void app_main(void)
 
     // Re-add the peers saved by earlier "peer_add" commands
     ESP_ERROR_CHECK(mac_store_init());
-    for (size_t i = 0; i < mac_store_count(); i++) {
-        uint8_t mac[6];
-        if (mac_store_get(i, mac) != ESP_OK) {
-            continue;
-        }
+    for (int type = 0; type < 2; type++) {
+        bool encrypted = type == 0;
+        for (size_t i = 0; i < mac_store_count(encrypted); i++) {
+            uint8_t mac[6];
+            if (mac_store_get(encrypted, i, mac) != ESP_OK) {
+                continue;
+            }
 
-        esp_err_t err = esp_now_module_add_peer(mac);
-        if (err != ESP_OK) {
-            ESP_LOGW("main", "Could not re-add stored peer %02x:%02x:%02x:%02x:%02x:%02x (%s)",
-                     mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], esp_err_to_name(err));
+            esp_err_t err = esp_now_module_add_peer(mac, encrypted);
+            if (err != ESP_OK) {
+                ESP_LOGW("main", "Could not re-add stored peer %02x:%02x:%02x:%02x:%02x:%02x (%s)",
+                         mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], esp_err_to_name(err));
+            }
         }
     }
 

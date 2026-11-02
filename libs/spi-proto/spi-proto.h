@@ -6,8 +6,14 @@
 
 #define ESP_LINK_PAYLOAD_LEN 32 // same size as the ESP-NOW packet data
 #define ESP_LINK_FRAME_LEN   40 // every transaction, both directions
-// MACs that fit in one GET_PEERS reply (after the count byte)
+// MACs that fit in one GET_PEERS reply (after the count byte). A list can't be longer than this
 #define ESP_LINK_PEERS_PER_REPLY ((ESP_LINK_PAYLOAD_LEN - 1) / 6)
+
+/* Peer types, used by PEER_ADD and GET_PEERS */
+enum {
+    ESP_LINK_PEER_ENCRYPTED = 0,
+    ESP_LINK_PEER_UNENCRYPTED = 1,
+};
 
 /* Magic bytes for the start of a frame */
 enum {
@@ -19,12 +25,12 @@ enum {
 enum {
     ESP_LINK_CMD_NOP = 0,         // no request, just clock the previous answer out
     ESP_LINK_CMD_SEND_PACKET = 1, // payload (32 bytes) is sent out over ESP-NOW
-    ESP_LINK_CMD_PEER_ADD = 2,    // payload: MAC (6 bytes). Registers and stores it
-    ESP_LINK_CMD_PEER_DEL = 3,    // payload: MAC (6 bytes)
+    ESP_LINK_CMD_PEER_ADD = 2,    // payload: MAC (6 bytes), then the type (ESP_LINK_PEER_*). Registers and stores it
+    ESP_LINK_CMD_PEER_DEL = 3,    // payload: MAC (6 bytes). Removes it whatever its type
     ESP_LINK_CMD_PEER_CLEAR = 4,  // no payload
     ESP_LINK_CMD_GET_MAC = 5,     // answer: this board's MAC (6 bytes)
-    ESP_LINK_CMD_GET_PEERS = 6,   // arg: index of the first peer wanted (0, 5, ...). Answer: total count
-                                  // (1 byte), then up to ESP_LINK_PEERS_PER_REPLY MACs from there
+    ESP_LINK_CMD_GET_PEERS = 6,   // arg: the type wanted (ESP_LINK_PEER_*). Answer: count (1 byte), then
+                                  // that many MACs (6 bytes each)
 };
 
 /* Status codes, slave -> master (EspLinkFrame.code) */

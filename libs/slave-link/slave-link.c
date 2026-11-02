@@ -17,6 +17,10 @@
 #include "espnow-comm.h"
 #include "mac-store.h"
 
+_Static_assert(MAC_STORE_MAX_ENCRYPTED <= ESP_LINK_PEERS_PER_REPLY &&
+                   MAC_STORE_MAX_PLAIN <= ESP_LINK_PEERS_PER_REPLY,
+               "a GET_PEERS reply must hold a whole list");
+
 #define TAG "SPI_LINK"
 
 typedef struct {
@@ -86,20 +90,23 @@ static Result handle_request(const EspLinkFrame *frame)
         result.status = status_of(esp_now_send_packet(NULL, &pkt));
         break;
 
-    case ESP_LINK_CMD_PEER_ADD:
-        if (frame->len != 6) {
+    case ESP_LINK_CMD_PEER_ADD: {
+        // payload: the MAC, then the peer type
+        if (frame->len != 7 || frame->payload[6] > ESP_LINK_PEER_UNENCRYPTED) {
             result.status = ESP_LINK_STATUS_BAD_FRAME;
             break;
         }
 
-        err = esp_now_module_add_peer(frame->payload);
+        bool encrypted = frame->payload[6] == ESP_LINK_PEER_ENCRYPTED;
+        err = esp_now_module_add_peer(frame->payload, encrypted);
         if (err == ESP_OK) {
             // remember it across reboots
-            err = mac_store_add(frame->payload);
+            err = mac_store_add(frame->payload, encrypted);
         }
 
         result.status = status_of(err);
         break;
+    }
 
     case ESP_LINK_CMD_PEER_DEL: {
         if (frame->len != 6) {
@@ -117,10 +124,13 @@ static Result handle_request(const EspLinkFrame *frame)
     }
 
     case ESP_LINK_CMD_PEER_CLEAR: {
-        for (size_t i = 0; i < mac_store_count(); i++) {
-            uint8_t mac[6];
-            if (mac_store_get(i, mac) == ESP_OK) {
-                esp_now_del_peer(mac);
+        for (int type = 0; type < 2; type++) {
+            bool encrypted = type == 0;
+            for (size_t i = 0; i < mac_store_count(encrypted); i++) {
+                uint8_t mac[6];
+                if (mac_store_get(encrypted, i, mac) == ESP_OK) {
+                    esp_now_del_peer(mac);
+                }
             }
         }
 
@@ -134,16 +144,12 @@ static Result handle_request(const EspLinkFrame *frame)
         break;
 
     case ESP_LINK_CMD_GET_PEERS: {
-        // The argument is the index of the first peer wanted: 0, then 5 for the next batch
-        // (the store holds at most 10 and a reply fits ESP_LINK_PEERS_PER_REPLY)
-        uint8_t idx = frame->len >= 1 ? frame->payload[0] : 0;
-        size_t total = mac_store_count();
-        result.data[0] = (uint8_t)total;
-
-        size_t remaining = total > idx ? total - idx : 0;
-        size_t n = remaining < ESP_LINK_PEERS_PER_REPLY ? remaining : ESP_LINK_PEERS_PER_REPLY;
+        // The argument is which list is wanted. Each list fits in one reply.
+        bool encrypted = !(frame->len >= 1 && frame->payload[0] == ESP_LINK_PEER_UNENCRYPTED);
+        size_t n = mac_store_count(encrypted);
+        result.data[0] = (uint8_t)n;
         for (size_t i = 0; i < n; i++) {
-            mac_store_get(idx + i, &result.data[1 + 6 * i]);
+            mac_store_get(encrypted, i, &result.data[1 + 6 * i]);
         }
 
         result.len = (uint8_t)(1 + 6 * n);

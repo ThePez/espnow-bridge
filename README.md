@@ -31,7 +31,7 @@ All three boards have the same line-editing console (history, Tab completion, a 
 |---|---|---|
 | `embedded-console` | all three | Line editor, history, Tab completion and the command table (`commands.c`). One source for both chips; `commands.c` picks its commands with `ESP_PLATFORM` or `USE_HAL_DRIVER` |
 | `espnow-comm` | ESP | Brings up NVS, WiFi and encrypted ESP-NOW; packet CRC; the receive queue |
-| `mac-store` | ESP | The list of peer MACs, saved in NVS so it survives a reboot |
+| `mac-store` | ESP | The peer MACs (5 encrypted and 5 unencrypted), saved in NVS so they survive a reboot |
 | `device-config` | ESP | Versioned config blobs in NVS (used by `mac-store`) |
 | `common-functions` | ESP | Header-only error-check macros |
 | `packet-monitor` | base-station | Task that drains the receive queue and prints each decoded packet |
@@ -84,15 +84,25 @@ server at the `compile_commands.json` of the project that builds each part of `l
 
 ## First-time setup
 
-ESP-NOW is encrypted, so **each ESP has to list the other as a peer**. The base station needs the
-bridge to decrypt its packets, and the bridge needs the base station to send to it.
+There are two kinds of peer:
+
+- **Encrypted** (the default): for your own boards. Both sides must list each other, with the
+  same keys. The base station needs the bridge as a peer to decrypt its packets, and the bridge
+  needs the base station to send to it.
+- **Unencrypted** (`-u`): for devices that can't be given our keys, such as the machines the
+  students control. Only the sender lists the machine's MAC. The machine receives the frames
+  without registering anyone, and nothing is checked about who sent them.
+
+The base station is for testing, so use encrypted peers there. The STM32 add command takes the
+same `-u` flag, which is how students point their bridge at a machine.
 
 1. On the base station console: `mac` (note it).
 2. From the STM32 console: `esp_mac` (the bridge's MAC), then `esp_add <base-station MAC>`.
 3. On the base station console: `peer_add <bridge MAC>`.
 4. From the STM32 console: `esp_send`. The base station should print a `JOIN` packet.
 
-Peers are saved in the ESP's NVS (up to 10), so this only needs doing once per board. Both ESPs
+Peers are saved in the ESP's NVS (up to 5 encrypted and 5 unencrypted), so this only needs doing
+once per board. Adding a MAC that is already stored in the other list moves it. Both ESPs
 use WiFi channel 9 and the PMK/LMK keys in `espnow-comm.c`; change them in one place and both
 boards need the same value.
 
@@ -104,10 +114,10 @@ ESP boards (base-station and spi-bridge):
 
 | Command | Does |
 |---|---|
-| `peer_add <mac>` | Register a device and save it |
+| `peer_add <mac> [-u]` | Register a device and save it. `-u`: unencrypted |
 | `peer_del <mac>` | Remove a device and forget it |
 | `peer_clear` | Remove every stored device |
-| `peers` | Show the registered devices |
+| `peers` | Show the registered devices, split into encrypted and unencrypted |
 | `mac` | Show this board's MAC address |
 | `summary` | Packet totals and per-sender counts (base-station) |
 
@@ -116,8 +126,8 @@ STM32 (these forward to the ESP over SPI):
 | Command | Does |
 |---|---|
 | `esp_mac` | The ESP's MAC address |
-| `esp_peers` | The ESP's stored peers |
-| `esp_add <mac>` / `esp_del <mac>` / `esp_clear` | Same as the ESP's own peer commands |
+| `esp_peers` | The ESP's stored peers, split into encrypted and unencrypted |
+| `esp_add <mac> [-u]` / `esp_del <mac>` / `esp_clear` | Same as the ESP's own peer commands |
 | `esp_send` | Send an already-encoded test JOIN through the ESP |
 
 All boards also have `hello`, `echo`, `heap`, `uptime`, `reboot` and `help`.
