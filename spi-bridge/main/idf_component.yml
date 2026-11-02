@@ -8,11 +8,11 @@ dependencies:
   # local components from ../libs
   espnow-comm:
     path: ../../libs/espnow-comm
-  device_config:
-    path: ../../libs/device_config
-  embedded_console:
-    path: ../../libs/embedded_console
+  device-config:
+    path: ../../libs/device-config
+  embedded-console:
+    path: ../../libs/embedded-console
   slave-link:
     path: ../../libs/slave-link
-  mac_store:
-    path: ../../libs/mac_store
+  mac-store:
+    path: ../../libs/mac-store

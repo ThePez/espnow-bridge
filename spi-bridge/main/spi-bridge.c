@@ -7,7 +7,7 @@
 #include "espnow-comm.h"
 #include "packet_sender.h"
 #include "slave-link.h"
-#include "mac_store.h"
+#include "mac-store.h"
 
 void app_main(void)
 {

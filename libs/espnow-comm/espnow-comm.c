@@ -8,8 +8,8 @@
 
 #include "espnow-comm.h"
 
-#include "common_functions.h"
-#include "device_config.h"
+#include "common-functions.h"
+#include "device-config.h"
 
 #include <esp_event.h>
 #include <esp_log.h>

@@ -1,14 +1,14 @@
-#include "mac_store.h"
+#include "mac-store.h"
 
 #include <stdbool.h>
 #include <string.h>
 
-#include "device_config.h"
+#include "device-config.h"
 
 #define NAMESPACE   "mac_store"
 #define CFG_VERSION 1
 
-// Stored as a single blob. `version` must stay first (see device_config.h); bump CFG_VERSION on
+// Stored as a single blob. `version` must stay first (see device-config.h); bump CFG_VERSION on
 // any layout change.
 typedef struct {
     uint16_t version;

@@ -1,6 +1,6 @@
 /*
  *****************************************************************************
- * File: common_functions.h
+ * File: common-functions.h
  * Author: Jack Cairns
  * Brief: Small helper macros shared by the ESP32 libraries (header only)
  *****************************************************************************

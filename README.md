@@ -29,18 +29,18 @@ All three boards have the same line-editing console (history, Tab completion, a 
 
 | Component | Used by | Purpose |
 |---|---|---|
-| `embedded_console` | all three | Line editor, history, Tab completion and the command table (`commands.c`). One source for both chips; `commands.c` picks its commands with `ESP_PLATFORM` or `USE_HAL_DRIVER` |
+| `embedded-console` | all three | Line editor, history, Tab completion and the command table (`commands.c`). One source for both chips; `commands.c` picks its commands with `ESP_PLATFORM` or `USE_HAL_DRIVER` |
 | `espnow-comm` | ESP | Brings up NVS, WiFi and encrypted ESP-NOW; packet CRC; the receive queue |
-| `mac_store` | ESP | The list of peer MACs, saved in NVS so it survives a reboot |
-| `device_config` | ESP | Versioned config blobs in NVS (used by `mac_store`) |
-| `common_functions` | ESP | Header-only error-check macros |
+| `mac-store` | ESP | The list of peer MACs, saved in NVS so it survives a reboot |
+| `device-config` | ESP | Versioned config blobs in NVS (used by `mac-store`) |
+| `common-functions` | ESP | Header-only error-check macros |
 | `packet-monitor` | base-station | Task that drains the receive queue and prints each decoded packet |
 | `slave-link` | spi-bridge | The ESP side of the SPI link |
 | `master-link` | stm32-master | The STM32 side of the SPI link (`master-link.c`) |
 | `spi-proto` | both ends | `spi-proto.h`: the SPI frame format. The only thing the two sides share |
 
 Each ESP project builds `libs/` as extra components (`EXTRA_COMPONENT_DIRS`). The STM32 project
-includes `embedded_console.cmake` and `master-link.cmake` from `libs/` instead.
+includes `embedded-console.cmake` and `master-link.cmake` from `libs/` instead.
 
 ## Hardware
 
@@ -172,7 +172,7 @@ dropped and counted; anything that decodes but doesn't match one of the formats 
 
 ## Notes
 
-- `libs/embedded_console/commands.c` includes ESP-only headers (`packet-monitor.h`, `mac_store.h`) and
+- `libs/embedded-console/commands.c` includes ESP-only headers (`packet-monitor.h`, `mac-store.h`) and
   STM32-only ones (`master-link.h`) behind `#if`, so the same file builds for both.
 - The bad-CRC test packet makes the base station log `Invalid wifi packet recieved`. That is the
   expected result.

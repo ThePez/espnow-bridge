@@ -67,5 +67,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
 )
 
-include(../libs/embedded_console/embedded_console.cmake)
+include(../libs/embedded-console/embedded-console.cmake)
 include(../libs/master-link/master-link.cmake)

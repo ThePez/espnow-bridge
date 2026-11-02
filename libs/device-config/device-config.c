@@ -1,14 +1,14 @@
 /*
  ******************************************************************************
- * File: device_config.c
+ * File: device-config.c
  * Author: Jack Cairns
  * Date: 15-07-2026
  ******************************************************************************
  */
 
-#include "device_config.h"
+#include "device-config.h"
 
-#include "common_functions.h"
+#include "common-functions.h"
 
 #include <nvs_flash.h>
 #include <stdbool.h>
