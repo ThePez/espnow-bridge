@@ -1,0 +1,18 @@
+dependencies:
+  cmd_system:
+    path: ${IDF_PATH}/examples/system/console/advanced/components/cmd_system
+  cmd_nvs:
+    path: ${IDF_PATH}/examples/system/console/advanced/components/cmd_nvs
+  cmd_wifi:
+    path: ${IDF_PATH}/examples/system/console/advanced/components/cmd_wifi
+  # local components from ../libs
+  espnow-comm:
+    path: ../../libs/espnow-comm
+  device_config:
+    path: ../../libs/device_config
+  embedded_console:
+    path: ../../libs/embedded_console
+  listener:
+    path: ../../libs/listener
+  mac_store:
+    path: ../../libs/mac_store
