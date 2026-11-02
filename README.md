@@ -36,7 +36,7 @@ All three boards have the same line-editing console (history, Tab completion, a 
 | `common-functions` | ESP | Header-only error-check macros |
 | `packet-monitor` | base-station | Task that drains the receive queue and prints each decoded packet |
 | `slave-link` | spi-bridge | The ESP side of the SPI link |
-| `master-link` | stm32-master | The STM32 side of the SPI link (`master-link.c`) |
+| `master-link` | stm32-master | The STM32 side of the SPI link  |
 | `spi-proto` | both ends | `spi-proto.h`: the SPI frame format. The only thing the two sides share |
 
 Each ESP project builds `libs/` as extra components (`EXTRA_COMPONENT_DIRS`). The STM32 project

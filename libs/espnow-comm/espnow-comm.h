@@ -1,8 +1,11 @@
-/*
+/**
  ******************************************************************************
- * File: espnow-comm.h
- * Author: Jack Cairns
- * Date: 17-01-2026
+ * @file    espnow-comm.h
+ * @author  Jack Cairns
+ * @brief   ESP-NOW wrapper for the ESP32. Brings up NVS, WiFi (station
+ *          mode) and ESP-NOW with PMK/LMK encryption, registers peers,
+ *          sends packets with a CRC16 and queues received packets on
+ *          wifiQueue.
  ******************************************************************************
  */
 

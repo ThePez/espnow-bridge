@@ -1,7 +1,11 @@
-/*
+/**
  ******************************************************************************
- * File: master-link.c
- * Brief: SPI master side of the link to the ESP32-S3, see master-link.h
+ * @file    master-link.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the SPI master link in master-link.h. Waits
+ *          for READY, clocks one frame, checks the reply, and builds the
+ *          packet and request calls on that. A request is two
+ *          transactions: the request, then one that reads the reply.
  ******************************************************************************
  */
 

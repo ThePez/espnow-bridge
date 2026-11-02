@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    esp32-base-station.c
+ * @author  Jack Cairns
+ * @brief   Application entry point for the ESP32 base station.
+ *          Initialises ESP-NOW, restores the stored peers, then starts
+ *          the console and the packet monitor.
+ ******************************************************************************
+ */
+
 #include <stdbool.h>
 
 #include "esp_err.h"

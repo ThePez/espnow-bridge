@@ -1,9 +1,11 @@
-/*
- *****************************************************************************
- * File: common-functions.h
- * Author: Jack Cairns
- * Brief: Small helper macros shared by the ESP32 libraries (header only)
- *****************************************************************************
+/**
+ ******************************************************************************
+ * @file    common-functions.h
+ * @author  Jack Cairns
+ * @brief   Small helper macros shared by the ESP32 libraries (header
+ *          only): ARG_UNUSED and the CHECK_ERR / CHECK_ERR_NO_LOG early-
+ *          return helpers for esp_err_t.
+ ******************************************************************************
  */
 
 #ifndef COMMON_H

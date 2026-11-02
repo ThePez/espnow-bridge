@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    packet_sender.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the test packet sender. Builds well formed,
+ *          badly formatted and Hamming-corrupted packets and sends one to
+ *          every peer each SEND_PERIOD_MS.
+ ******************************************************************************
+ */
+
 #include "packet_sender.h"
 
 #include <stdbool.h>

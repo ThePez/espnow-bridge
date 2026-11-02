@@ -1,3 +1,14 @@
+/**
+ ******************************************************************************
+ * @file    master-link.h
+ * @author  Jack Cairns
+ * @brief   SPI master side of the link to the ESP32-S3, for the STM32F4
+ *          HAL. Software chip select and a READY input from the ESP. The
+ *          SPI handle, pins and timeout can be overridden in platform-
+ *          conf.h. Frame format is in spi-proto.h.
+ ******************************************************************************
+ */
+
 #ifndef ESP_LINK_H
 #define ESP_LINK_H
 

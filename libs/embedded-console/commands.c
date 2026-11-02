@@ -1,3 +1,14 @@
+/**
+ ******************************************************************************
+ * @file    commands.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the command registry in commands.h. One
+ *          table drives dispatch, help and completion. ESP32 builds get
+ *          the peer and summary commands, STM32 builds get the esp_*
+ *          commands that go over the SPI link.
+ ******************************************************************************
+ */
+
 #include "commands.h"
 
 #include <stdbool.h>

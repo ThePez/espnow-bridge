@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    commands.h
+ * @author  Jack Cairns
+ * @brief   Command dispatch for the serial console: splits a line into
+ *          arguments, runs the matching command and finds Tab
+ *          completions.
+ ******************************************************************************
+ */
+
 #ifndef COMMANDS_H
 #define COMMANDS_H
 

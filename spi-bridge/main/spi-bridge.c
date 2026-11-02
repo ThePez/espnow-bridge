@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    spi-bridge.c
+ * @author  Jack Cairns
+ * @brief   Application entry point for the ESP32 SPI bridge. Initialises
+ *          ESP-NOW, restores the stored peers, then starts the console
+ *          and the SPI slave link to the STM32.
+ ******************************************************************************
+ */
+
 #include <stdbool.h>
 #include "esp_err.h"
 #include "esp_log.h"

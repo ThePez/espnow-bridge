@@ -1,3 +1,14 @@
+/**
+ ******************************************************************************
+ * @file    console.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the serial console in console.h. Byte
+ *          receive path per platform (ESP-IDF UART driver, or HAL UART
+ *          interrupt into a FreeRTOS queue), the escape sequence parser,
+ *          line editor, history and the console task.
+ ******************************************************************************
+ */
+
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -34,6 +45,12 @@
 #define SEQ_TIMEOUT 50  // ms
 #define HISTORY     10  // num slots
 #define MATCH_MAX   10  // num slots
+
+#if defined(ESP_PLATFORM)
+#define GET_BYTE(ptr, delay) (uart_read_bytes(CONSOLE_UART, (ptr), 1, (delay)) == 1)
+#elif defined(USE_HAL_DRIVER)
+#define GET_BYTE(ptr, delay) (xQueueReceive(rx_queue, (ptr), (delay)) == pdTRUE)
+#endif
 
 typedef enum {
     NORMAL,
@@ -606,24 +623,12 @@ static void console_task(void *arg)
     printf("3010 Console\r\n");
     printf(PROMPT);
     fflush(stdout);
-    con.editing = 1; // the prompt is on screen now, so later output must wipe and redraw it
+    con.editing = 1;
 
     for (;;) {
-#if defined(ESP_PLATFORM)
-        // ESP32 Style Code
-
-        // Block until a byte arrives; the sequence timeouts are checked when the next byte lands.
-        if (uart_read_bytes(CONSOLE_UART, &c, 1, portMAX_DELAY) == 1) {
+        if (GET_BYTE(&c, portMAX_DELAY)) {
             process(&con, (char)c);
         }
-#elif defined(USE_HAL_DRIVER)
-        // STM32 Style Code
-
-        // Block until the UART ISR queues a byte
-        if (xQueueReceive(rx_queue, &c, portMAX_DELAY) == pdTRUE) {
-            process(&con, (char)c);
-        }
-#endif
     }
 }
 
@@ -642,9 +647,7 @@ void console_start(void)
 
     rx_queue = xQueueCreate(RX_BUF_SIZE, sizeof(uint8_t));
     configASSERT(rx_queue != NULL);
-    
-    // No stdio buffering: the editor's escape sequences must go out immediately
-    // setvbuf(stdout, NULL, _IONBF, 0);
+
     HAL_UART_Receive_IT(&CONSOLE_HUART, &rx_byte, 1);
 #endif
 

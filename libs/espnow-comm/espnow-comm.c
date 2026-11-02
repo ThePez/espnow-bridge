@@ -1,8 +1,10 @@
-/*
+/**
  ******************************************************************************
- * File: espnow-comm.c
- * Author: Jack Cairns
- * Date: 17-01-2026
+ * @file    espnow-comm.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the ESP-NOW wrapper in espnow-comm.h:
+ *          WiFi/ESP-NOW init, the send and receive callbacks, peer add
+ *          and channel set.
  ******************************************************************************
  */
 

@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    packet-monitor.h
+ * @author  Jack Cairns
+ * @brief   Packet monitor for the ESP32 base station: a task that drains
+ *          wifiQueue and prints each decoded packet, plus a summary of
+ *          the totals.
+ ******************************************************************************
+ */
+
 #ifndef PACKET_MONITOR_H
 #define PACKET_MONITOR_H
 

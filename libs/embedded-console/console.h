@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    console.h
+ * @author  Jack Cairns
+ * @brief   Serial console shared by the ESP32 and STM32 builds. Line
+ *          editing, history and Tab completion over a UART, with printf
+ *          variants that keep the line being edited intact.
+ ******************************************************************************
+ */
+
 #ifndef CONSOLE_H
 #define CONSOLE_H
 

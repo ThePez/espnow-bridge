@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    mac-store.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the peer MAC lists in mac-store.h. Both
+ *          lists are kept in one versioned config blob (see device-
+ *          config.h) and saved on every change.
+ ******************************************************************************
+ */
+
 #include "mac-store.h"
 
 #include <stdbool.h>

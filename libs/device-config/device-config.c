@@ -1,8 +1,9 @@
-/*
+/**
  ******************************************************************************
- * File: device-config.c
- * Author: Jack Cairns
- * Date: 15-07-2026
+ * @file    device-config.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the NVS init and blob load/save helpers
+ *          declared in device-config.h.
  ******************************************************************************
  */
 

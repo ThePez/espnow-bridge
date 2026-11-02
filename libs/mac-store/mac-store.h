@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    mac-store.h
+ * @author  Jack Cairns
+ * @brief   Two lists of peer MAC addresses (encrypted and unencrypted)
+ *          persisted in NVS so they survive a reboot. A MAC is in at most
+ *          one list.
+ ******************************************************************************
+ */
+
 #ifndef MAC_STORE_H
 #define MAC_STORE_H
 

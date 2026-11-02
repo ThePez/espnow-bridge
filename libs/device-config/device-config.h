@@ -1,8 +1,11 @@
-/*
+/**
  ******************************************************************************
- * File: device-config.h
- * Author: Jack Cairns
- * Date: 15-07-2026
+ * @file    device-config.h
+ * @author  Jack Cairns
+ * @brief   NVS flash init and versioned config blobs. A config struct is
+ *          stored as one blob and reseeded from compiled defaults if the
+ *          stored version does not match. cfgMutex protects the config
+ *          data.
  ******************************************************************************
  */
 

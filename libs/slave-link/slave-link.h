@@ -1,3 +1,13 @@
+/**
+ ******************************************************************************
+ * @file    slave-link.h
+ * @author  Jack Cairns
+ * @brief   SPI slave side of the link to the STM32. Starts the SPI slave
+ *          and READY pin and a task that answers the STM32's requests
+ *          (see spi-proto.h).
+ ******************************************************************************
+ */
+
 #ifndef SPI_LINK_H
 #define SPI_LINK_H
 

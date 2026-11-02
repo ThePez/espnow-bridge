@@ -1,3 +1,14 @@
+/**
+ ******************************************************************************
+ * @file    packet-monitor.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the packet monitor. Hamming-decodes each
+ *          received packet (correcting single bit errors per byte),
+ *          parses the JOIN and XYZ formats, and keeps the packet totals
+ *          and per-sender counts.
+ ******************************************************************************
+ */
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>

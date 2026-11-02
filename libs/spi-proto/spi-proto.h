@@ -1,3 +1,14 @@
+/**
+ ******************************************************************************
+ * @file    spi-proto.h
+ * @author  Jack Cairns
+ * @brief   Wire protocol shared by both ends of the STM32 to ESP32 SPI
+ *          link (header only): fixed 40 byte frame, start bytes, command
+ *          and status codes, and the CRC-16/CCITT-FALSE seal and check
+ *          helpers.
+ ******************************************************************************
+ */
+
 #ifndef LINK_PROTO_H
 #define LINK_PROTO_H
 

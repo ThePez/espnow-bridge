@@ -1,3 +1,12 @@
+/**
+ ******************************************************************************
+ * @file    packet_sender.h
+ * @author  Jack Cairns
+ * @brief   Test packet sender for the SPI bridge: a task that cycles
+ *          through the test packets in packet_sender.c.
+ ******************************************************************************
+ */
+
 #ifndef PACKET_SENDER_H
 #define PACKET_SENDER_H
 

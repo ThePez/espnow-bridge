@@ -1,3 +1,14 @@
+/**
+ ******************************************************************************
+ * @file    slave-link.c
+ * @author  Jack Cairns
+ * @brief   Implementation of the SPI slave link in slave-link.h. Receives
+ *          one frame per transaction, checks it, handles the request
+ *          (send a packet over ESP-NOW, peer add/delete/clear, get
+ *          MAC/peers) and loads the reply for the next transaction.
+ ******************************************************************************
+ */
+
 #include "esp_err.h"
 #include "slave-link.h"
 
