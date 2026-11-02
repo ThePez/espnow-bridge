@@ -68,4 +68,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 )
 
 include(../libs/embedded_console/embedded_console.cmake)
-include(../libs/master-link/esp_link.cmake)
+include(../libs/master-link/master-link.cmake)

@@ -4,8 +4,8 @@
 #include "freertos/task.h"
 
 #include "console.h"
-#include "espnow_comm.h"
-#include "listener.h"
+#include "espnow-comm.h"
+#include "packet-monitor.h"
 #include "mac_store.h"
 
 void app_main(void)
@@ -28,11 +28,11 @@ void app_main(void)
         }
     }
 
-    // The console must be up before the listener, because the listener prints through it
+    // The console must be up before the packet monitor, because it prints through it
     console_start();
 
     // The queue exists once the module is initialised.
-    listener_start();
+    packet_monitor_start();
 
     // End the main task here.
     vTaskDelete(NULL);

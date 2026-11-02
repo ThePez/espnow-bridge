@@ -1,12 +1,12 @@
 /*
  ******************************************************************************
- * File: espnow_comm.c
+ * File: espnow-comm.c
  * Author: Jack Cairns
  * Date: 17-01-2026
  ******************************************************************************
  */
 
-#include "espnow_comm.h"
+#include "espnow-comm.h"
 
 #include "common_functions.h"
 #include "device_config.h"

@@ -1,5 +1,5 @@
 #include "esp_err.h"
-#include "spi_link.h"
+#include "slave-link.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -13,8 +13,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "link_proto.h"
-#include "espnow_comm.h"
+#include "spi-proto.h"
+#include "espnow-comm.h"
 #include "mac_store.h"
 
 #define TAG "SPI_LINK"

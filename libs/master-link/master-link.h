@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#include "link_proto.h"
+#include "spi-proto.h"
 #include "stm32f4xx_hal.h"
 
 /* The CubeMX SPI handle, if not specified by a platform-conf.h file */
@@ -68,7 +68,7 @@ uint8_t esp_link_send_packet(uint8_t *tx_buf);
 
 /**
  * @brief  Ask the ESP to do something and read back its answer (two SPI transactions). The
- *         ESP_LINK_CMD_* codes in link_proto.h say what can be asked, e.g. ADD_PEER with
+ *         ESP_LINK_CMD_* codes in spi-proto.h say what can be asked, e.g. ADD_PEER with
  *         the MAC as the argument, or GET_MAC with no argument and 6 bytes back.
  * @param  cmd      An ESP_LINK_CMD_* code.
  * @param  arg      Argument bytes, or NULL if arg_len is 0.

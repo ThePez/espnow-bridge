@@ -5,7 +5,7 @@ set(ESP_LINK_DIR ${CMAKE_CURRENT_LIST_DIR})
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    ${ESP_LINK_DIR}/esp_link.c
+    ${ESP_LINK_DIR}/master-link.c
 )
 
 # Add include paths (the module itself, and the protocol header shared with the ESP)
@@ -24,7 +24,7 @@ if(NOT "${ESP_LINK_MX_DRIVER_SRCS}" MATCHES "stm32f4xx_hal_spi\\.c")
         ${CMAKE_SOURCE_DIR}/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c
     )
     target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${ESP_LINK_HAL_SPI_SRC})
-    set_source_files_properties(${ESP_LINK_HAL_SPI_SRC} ${ESP_LINK_DIR}/esp_link.c
+    set_source_files_properties(${ESP_LINK_HAL_SPI_SRC} ${ESP_LINK_DIR}/master-link.c
         PROPERTIES COMPILE_DEFINITIONS HAL_SPI_MODULE_ENABLED
     )
 endif()

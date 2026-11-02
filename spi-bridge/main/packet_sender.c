@@ -10,7 +10,7 @@
 #include "freertos/task.h"
 
 #include "console.h"
-#include "espnow_comm.h"
+#include "espnow-comm.h"
 
 /* ------------------------------------------------------------------------- */
 /* Test packets                                                              */
@@ -78,7 +78,7 @@ static const TestPacket tests[] = {
     {.name = "1 bit error + bad format", .type = 0x30, .addr = ADDR_A, .payload = "HELLO",
      .flips = {{14, 0x08}}},
 
-    /* dropped by the espnow layer, never reaches the listener */
+    /* dropped by the espnow layer, never reaches the packet monitor */
     {.name = "bad CRC16", .type = TYPE_XYZ, .addr = ADDR_A, .payload = "XYZ10005025",
      .badCrc = true},
 };
@@ -86,7 +86,7 @@ static const TestPacket tests[] = {
 #define NUM_TESTS (sizeof(tests) / sizeof(tests[0]))
 
 /* ------------------------------------------------------------------------- */
-/* Hamming(7,4) + overall parity encode, the inverse of the decoder in listener.c */
+/* Hamming(7,4) + overall parity encode, the inverse of the decoder in packet-monitor.c */
 /* ------------------------------------------------------------------------- */
 
 static uint8_t ham_encode_nibble(uint8_t d)

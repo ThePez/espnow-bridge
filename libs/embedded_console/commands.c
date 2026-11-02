@@ -17,8 +17,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "espnow_comm.h"
-#include "listener.h"
+#include "espnow-comm.h"
+#include "packet-monitor.h"
 #include "mac_store.h"
 
 #elif defined(USE_HAL_DRIVER)
@@ -27,7 +27,7 @@
 #include "stm32f4xx_hal.h"
 #include "task.h"
 
-#include "esp_link.h"
+#include "master-link.h"
 
 #else
 
@@ -317,7 +317,7 @@ static void cmd_summary(int argc, char **argv)
 {
     (void)argc;
     (void)argv;
-    listener_print_summary();
+    packet_monitor_print_summary();
 }
 
 #endif

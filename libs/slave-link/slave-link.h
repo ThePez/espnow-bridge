@@ -4,7 +4,7 @@
 #include <esp_err.h>
 
 /**
- * @brief Starts the SPI slave that the STM32 talks to (see link_proto.h).
+ * @brief Starts the SPI slave that the STM32 talks to (see spi-proto.h).
  *
  * Sets up the SPI slave and READY pin, then runs a task that answers the STM32's requests:
  * packets are forwarded over ESP-NOW and the peer commands use the same peer list as the

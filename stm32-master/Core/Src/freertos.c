@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "esp_link.h"
+#include "master-link.h"
 #include "console.h"
 /* USER CODE END Includes */
 

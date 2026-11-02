@@ -1,17 +1,17 @@
 /*
  ******************************************************************************
- * File: esp_link.c
- * Brief: SPI master side of the link to the ESP32-S3, see esp_link.h
+ * File: master-link.c
+ * Brief: SPI master side of the link to the ESP32-S3, see master-link.h
  ******************************************************************************
  */
 
-#include "esp_link.h"
+#include "master-link.h"
 
 #include <stdint.h>
 #include <string.h>
 
 #include "FreeRTOS.h"
-#include "link_proto.h"
+#include "spi-proto.h"
 #include "stm32f4xx_hal_def.h"
 #include "task.h"
 

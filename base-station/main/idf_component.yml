@@ -12,7 +12,7 @@ dependencies:
     path: ../../libs/device_config
   embedded_console:
     path: ../../libs/embedded_console
-  listener:
-    path: ../../libs/listener
+  packet-monitor:
+    path: ../../libs/packet-monitor
   mac_store:
     path: ../../libs/mac_store

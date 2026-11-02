@@ -4,9 +4,9 @@
 #include "freertos/task.h"
 
 #include "console.h"
-#include "espnow_comm.h"
+#include "espnow-comm.h"
 #include "packet_sender.h"
-#include "spi_link.h"
+#include "slave-link.h"
 #include "mac_store.h"
 
 void app_main(void)

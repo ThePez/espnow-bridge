@@ -7,8 +7,8 @@
 #include "freertos/task.h"
 
 #include "console.h"
-#include "espnow_comm.h"
-#include "listener.h"
+#include "espnow-comm.h"
+#include "packet-monitor.h"
 
 /* ------------------------------------------------------------------------- */
 /* Types and state                                                           */
@@ -294,7 +294,7 @@ static void reportPacket(const uint16_t enc[16])
     }
 }
 
-void listener_print_summary(void)
+void packet_monitor_print_summary(void)
 {
     console_printf("... %lu packets (%lu needed correcting), %lu bad format, dropped: %lu failed "
                    "Hamming\r\n",
@@ -311,7 +311,7 @@ void listener_print_summary(void)
 /* Task                                                                      */
 /* ------------------------------------------------------------------------- */
 
-static void listener_task(void *pvParams)
+static void packet_monitor_task(void *pvParams)
 {
     (void)pvParams;
 
@@ -328,7 +328,7 @@ static void listener_task(void *pvParams)
     }
 }
 
-void listener_start(void)
+void packet_monitor_start(void)
 {
-    xTaskCreate(listener_task, "Listener", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
+    xTaskCreate(packet_monitor_task, "PacketMonitor", 4096, NULL, tskIDLE_PRIORITY + 2, NULL);
 }
