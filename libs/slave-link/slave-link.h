@@ -8,8 +8,8 @@
  ******************************************************************************
  */
 
-#ifndef SPI_LINK_H
-#define SPI_LINK_H
+#ifndef SLAVE_LINK_H
+#define SLAVE_LINK_H
 
 #include <esp_err.h>
 

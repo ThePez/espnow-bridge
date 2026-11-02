@@ -8,8 +8,8 @@
  ******************************************************************************
  */
 
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef COMMON_FUNCTIONS_H
+#define COMMON_FUNCTIONS_H
 
 #include <esp_err.h>
 #include <esp_log.h>

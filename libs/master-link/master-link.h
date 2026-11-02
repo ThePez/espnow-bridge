@@ -9,8 +9,8 @@
  ******************************************************************************
  */
 
-#ifndef ESP_LINK_H
-#define ESP_LINK_H
+#ifndef MASTER_LINK_H
+#define MASTER_LINK_H
 
 #ifdef HAVE_PLATFORMCONF_H
 #include "platform-conf.h"

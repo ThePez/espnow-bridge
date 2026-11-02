@@ -9,8 +9,8 @@
  ******************************************************************************
  */
 
-#ifndef LINK_PROTO_H
-#define LINK_PROTO_H
+#ifndef SPI_PROTO_H
+#define SPI_PROTO_H
 
 #include <stddef.h>
 #include <stdint.h>
