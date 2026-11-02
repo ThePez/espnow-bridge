@@ -202,13 +202,26 @@ static int parseXyz(const uint8_t *payload, int *x, int *y, int *z)
 
 static void reportPacket(const uint16_t enc[16])
 {
-    Packet pkt;
+    Packet pkt = {0};
     uint8_t fixes = 0;
+    char decHex[50];     // needs 49
+    char encHex[100];    // needs 97
+    char data[75] = {0}; // Needs roughly 43 at most
     HamResult ecc = hamDecodePacket(enc, &pkt, &fixes);
+
+    for (uint8_t i = 0; i < 32; i++) {
+        snprintf(&encHex[i * 3], 4, "%02X ", ((const uint8_t *)enc)[i]);
+    }
+
+    for (uint8_t i = 0; i < sizeof(Packet); i++) {
+        snprintf(&decHex[i * 3], 4, "%02X ", ((const uint8_t *)&pkt)[i]);
+    }
 
     // drop packets with errors that can't be corrected, nothing in them can be trusted
     if (ecc == HAM_UNCORRECTABLE) {
         rejectedHamming++;
+        console_printf("  encoded : %s\r\n", encHex);
+        console_printf("  decoded : %s\r\n", decHex);
         return;
     } else if (ecc == HAM_CORRECTED) {
         correctedPackets++;
@@ -245,40 +258,28 @@ static void reportPacket(const uint16_t enc[16])
         }
     }
 
-    // Pre-format the variable parts, then print whole lines (console_printf needs each call
-    // to end in a newline). snprintf's size includes the '\0', hence 4 for "XX " per byte.
-    char encHex[3 * 32 + 1];
-    for (uint8_t i = 0; i < 32; i++) {
-        snprintf(&encHex[i * 3], 4, "%02X ", ((const uint8_t *)enc)[i]);
-    }
-
-    char decHex[3 * sizeof(Packet) + 1];
-    for (uint8_t i = 0; i < sizeof(Packet); i++) {
-        snprintf(&decHex[i * 3], 4, "%02X ", ((const uint8_t *)&pkt)[i]);
-    }
-
     // the data is only printed (and trusted) when the format checked out
     if (!formatOk) {
-        char text[12] = {0};
+
         for (int i = 0; i < 11; i++) {
-            text[i] = (pkt.payload[i] >= 0x20 && pkt.payload[i] < 0x7F) ? pkt.payload[i] : '?';
+            data[i] = (pkt.payload[i] >= 0x20 && pkt.payload[i] < 0x7F) ? pkt.payload[i] : '?';
         }
 
-        console_printf("\r\n[%8lu ms] #%lu  from %02X%02X%02X%02X  BAD FORMAT  type 0x%02X  "
+        console_printf("\r\n[%8lu ms] #%lu  Sender: %02X%02X%02X%02X  BAD FORMAT  type 0x%02X  "
                        "payload \"%s\"\r\n",
                        (unsigned long)pdTICKS_TO_MS(xTaskGetTickCount()),
                        (unsigned long)totalPackets, pkt.addr[0], pkt.addr[1], pkt.addr[2],
-                       pkt.addr[3], pkt.type, text);
+                       pkt.addr[3], pkt.type, data);
     } else {
-        char data[48];
+
         if (pkt.type == TYPE_JOIN) {
             snprintf(data, sizeof(data), "JOIN");
         } else {
-            snprintf(data, sizeof(data), "XYZ x=%d y=%d z=%d%s", x, y, z,
+            snprintf(data, sizeof(data), "XYZ \r\nx=%d y=%d z=%d%s", x, y, z,
                      (x > X_MAX || y > Y_MAX || z > Z_MAX) ? "  ** OUT OF RANGE **" : "");
         }
 
-        console_printf("\r\n[%8lu ms] #%lu  from %02X%02X%02X%02X  %s\r\n",
+        console_printf("\r\n[%8lu ms] #%lu  Sender: %02X%02X%02X%02X  Type: %s\r\n",
                        (unsigned long)pdTICKS_TO_MS(xTaskGetTickCount()),
                        (unsigned long)totalPackets, pkt.addr[0], pkt.addr[1], pkt.addr[2],
                        pkt.addr[3], data);
@@ -295,12 +296,12 @@ static void reportPacket(const uint16_t enc[16])
     if (sender >= 0 && formatOk) {
         if (lastSender >= 0 && sender != lastSender) {
             const uint8_t *prev = senders[lastSender].addr;
-            console_printf("  ** SENDER CHANGED: %02X%02X%02X%02X -> %02X%02X%02X%02X%s **\r\n",
-                           prev[0], prev[1], prev[2], prev[3], pkt.addr[0], pkt.addr[1],
-                           pkt.addr[2], pkt.addr[3],
-                           pkt.type == TYPE_JOIN ? " (JOIN, this sender now controls the AOXB)"
-                                                 : "");
+            console_printf(
+                "  ** SENDER CHANGED: %02X%02X%02X%02X -> %02X%02X%02X%02X%s **\r\n", prev[0],
+                prev[1], prev[2], prev[3], pkt.addr[0], pkt.addr[1], pkt.addr[2], pkt.addr[3],
+                pkt.type == TYPE_JOIN ? " (JOIN, this sender now controls the AOXB)" : "");
         }
+
         lastSender = sender;
     }
 }

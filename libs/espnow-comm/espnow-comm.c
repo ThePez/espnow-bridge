@@ -163,12 +163,11 @@ esp_err_t esp_now_module_add_peer(const uint8_t mac[6], bool encrypted) {
         memcpy(peer_info.lmk, lmk_key, sizeof(lmk_key));
     }
 
-    esp_err_t err = esp_now_add_peer(&peer_info);
-    if (err == ESP_ERR_ESPNOW_EXIST) {
-        // Already registered: update it, in case its encryption setting changed
-        err = esp_now_mod_peer(&peer_info);
+    // Check if it existed already
+    if (esp_now_is_peer_exist(peer_info.peer_addr)) {
+        return esp_now_mod_peer(&peer_info);
     }
-    return err;
+    return esp_now_add_peer(&peer_info);
 }
 
 esp_err_t esp_now_module_set_channel(uint8_t channel) {
