@@ -385,8 +385,14 @@ static void esp_link_report(const char *what, uint8_t rc)
         printf("%s: ok\r\n", what);
     } else if (rc == HAL_TIMEOUT) {
         printf("%s: timed out waiting for the ESP (READY)\r\n", what);
+    } else if (rc == ESP_LINK_RC_BUSY) {
+        printf("%s: ESP busy (ESP-NOW queue full), try again\r\n", what);
+    } else if (rc == ESP_LINK_RC_NO_PEERS) {
+        printf("%s: the ESP has no peers, add one first\r\n", what);
+    } else if (rc >= ESP_LINK_RC_BASE) {
+        printf("%s: the ESP reported an error (status %u)\r\n", what, rc - ESP_LINK_RC_BASE);
     } else {
-        printf("%s: failed (bad transfer or the ESP reported an error)\r\n", what);
+        printf("%s: failed (bad transfer or reply)\r\n", what);
     }
 }
 

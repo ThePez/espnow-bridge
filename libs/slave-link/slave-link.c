@@ -67,7 +67,6 @@ typedef struct {
 #define SPI_LINK_PIN_READY 9
 #endif
 
-
 // Frame buffers
 static EspLinkFrame rxFrame;
 static EspLinkFrame txFrame;
@@ -76,9 +75,23 @@ static EspLinkFrame txFrame;
 /* Request handlers                                                          */
 /* ------------------------------------------------------------------------- */
 
+static inline uint8_t send_status_of(esp_err_t err)
+{
+    switch (err) {
+    case ESP_OK:
+        return ESP_LINK_STATUS_OK;
+    case ESP_ERR_ESPNOW_NO_MEM:
+        return ESP_LINK_STATUS_BUSY;
+    case ESP_ERR_ESPNOW_NOT_FOUND:
+        return ESP_LINK_STATUS_NO_PEERS;
+    default:
+        return ESP_LINK_STATUS_FAILED;
+    }
+}
+
 static inline uint8_t status_of(esp_err_t err)
 {
-    return err == ESP_OK ? ESP_LINK_STATUS_OK : ESP_LINK_STATUS_FAILED;
+    return (err == ESP_OK ? ESP_LINK_STATUS_OK : ESP_LINK_STATUS_FAILED);
 }
 
 static Result handle_request(const EspLinkFrame *frame)
@@ -98,7 +111,7 @@ static Result handle_request(const EspLinkFrame *frame)
         }
 
         memcpy(pkt.data.raw, frame->payload, ESP_LINK_PAYLOAD_LEN);
-        result.status = status_of(esp_now_send_packet(NULL, &pkt));
+        result.status = send_status_of(esp_now_send_packet(NULL, &pkt));
         break;
 
     case ESP_LINK_CMD_PEER_ADD: {

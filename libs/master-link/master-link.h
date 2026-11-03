@@ -49,6 +49,16 @@
 #define ESP_LINK_TIMEOUT_MS 50
 #endif
 
+/* Return codes. HAL_OK, HAL_TIMEOUT and HAL_ERROR (transfer or frame problem) are returned as
+ * they are. When the ESP answers with a non-OK status, the call returns ESP_LINK_RC_BASE plus that
+ * ESP_LINK_STATUS_* code, which keeps it clear of the HAL values. */
+enum {
+    ESP_LINK_RC_BASE = 0x10,
+    ESP_LINK_RC_FAILED = ESP_LINK_RC_BASE + ESP_LINK_STATUS_FAILED,
+    ESP_LINK_RC_BUSY = ESP_LINK_RC_BASE + ESP_LINK_STATUS_BUSY,
+    ESP_LINK_RC_NO_PEERS = ESP_LINK_RC_BASE + ESP_LINK_STATUS_NO_PEERS,
+};
+
 /* Set/Reset CS pin */
 #define ESP_LINK_CS_HIGH() HAL_GPIO_WritePin(ESP_LINK_CS_PORT, ESP_LINK_CS_PIN, GPIO_PIN_SET)
 #define ESP_LINK_CS_LOW()  HAL_GPIO_WritePin(ESP_LINK_CS_PORT, ESP_LINK_CS_PIN, GPIO_PIN_RESET)
@@ -72,8 +82,10 @@ void esp_link_init(void);
  * @param  tx_buf Payload to send, ESP_LINK_PAYLOAD_LEN (32) bytes.
  * @retval HAL_OK      The ESP queued the packet for ESP-NOW.
  * @retval HAL_TIMEOUT The ESP never raised READY, packet not sent.
- * @retval HAL_ERROR   The transfer failed, or the ESP could not send it (for example it has no
- *                     peers).
+ * @retval HAL_ERROR   The transfer or the reply frame was bad.
+ * @retval ESP_LINK_RC_BUSY     The ESP-NOW queue is full, try again shortly.
+ * @retval ESP_LINK_RC_NO_PEERS The ESP has no peers to send to, retrying will not help.
+ * @retval ESP_LINK_RC_FAILED   The ESP tried and could not send it.
  */
 uint8_t esp_link_send_packet(uint8_t *tx_buf);
 
@@ -89,7 +101,8 @@ uint8_t esp_link_send_packet(uint8_t *tx_buf);
  * @param  resp_len Number of answer bytes written to resp. May be NULL.
  * @retval HAL_OK      The ESP did it.
  * @retval HAL_TIMEOUT The ESP never raised READY.
- * @retval HAL_ERROR   The transfer failed or the ESP reported an error.
+ * @retval HAL_ERROR   The transfer failed or the reply frame was bad.
+ * @retval ESP_LINK_RC_BASE + n  The ESP reported ESP_LINK_STATUS_n (see ESP_LINK_RC_*).
  */
 uint8_t esp_link_request(uint8_t cmd, const uint8_t *arg, uint8_t arg_len, uint8_t *resp,
                          uint8_t *resp_len);

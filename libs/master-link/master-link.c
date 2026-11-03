@@ -121,8 +121,13 @@ uint8_t esp_link_request(uint8_t cmd, const uint8_t *arg, uint8_t arg_len, uint8
         return rc;
     }
 
-    if (reply.seq != requestSeq || reply.code != ESP_LINK_STATUS_OK) {
+    if (reply.seq != requestSeq) {
         return HAL_ERROR;
+    }
+
+    // The ESP understood the frame but the request failed, pass its reason up
+    if (reply.code != ESP_LINK_STATUS_OK) {
+        return (uint8_t)(ESP_LINK_RC_BASE + reply.code);
     }
 
     if (resp != NULL) {
